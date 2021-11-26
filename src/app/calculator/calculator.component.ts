@@ -1,24 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'app-calculator',
+  selector: 'calculator',
   templateUrl: './calculator.component.html',
   styleUrls: ['./calculator.component.css'],
 })
 export class CalculatorComponent implements OnInit {
   constructor() {}
+  limites: RegExp = new RegExp('');
+  screen: string = '0';
   input: string = '';
   result: string = '';
+  output: string = '';
   recent: boolean = false;
   ngOnInit(): void {
     //this.input='0';
   }
   pressNum(num: string) {
+    if(this.screen=='0'){
+      this.screen='';
+    }
     if (this.recent == true) {
       this.input = '';
+      this.screen='';
       this.recent = false;
     }
-    //Do Not Allow . more than once
+
+    //On evite les entrees de chifrees avec plusieurs virgules
     if (num == '.') {
       if (this.input != '') {
         const lastNum = this.getLastOperand();
@@ -31,21 +39,24 @@ export class CalculatorComponent implements OnInit {
     //Javascript will throw Octal literals are not allowed in strict mode.
     if (num == '0') {
       if (this.input == '') {
+        this.screen='0';
         return;
       }
-      const PrevKey = this.input[this.input.length - 1];
-      if (
-        PrevKey === '/' ||
-        PrevKey === '*' ||
-        PrevKey === '-' ||
-        PrevKey === '+'
-      ) {
-        return;
-      }
-    }
 
+      // const PrevKey = this.input[this.input.length - 1];
+      // if (
+      //   PrevKey === '/' ||
+      //   PrevKey === '*' ||
+      //   PrevKey === '-' ||
+      //   PrevKey === '+'
+      // ) {
+      //   this.screen+=num;
+      //   return;
+      // }
+    }
+    this.screen = this.screen + num;
     this.input = this.input + num;
-    this.calcAnswer();
+   // this.calcAnswer();
   }
 
   getLastOperand() {
@@ -63,7 +74,11 @@ export class CalculatorComponent implements OnInit {
   }
 
   pressOperator(op: string) {
-    //Do not allow operators more than once
+    //Pour eviter les debordements
+    if (this.recent == true) {
+      this.screen = 'Ans';
+      this.input = this.result;
+    }
     this.recent = false;
     const lastKey = this.input[this.input.length - 1];
     if (
@@ -72,17 +87,33 @@ export class CalculatorComponent implements OnInit {
       lastKey === '-' ||
       lastKey === '+'
     ) {
-      return;
+      this.input = this.input.substr(0, this.input.length - 1);
+      this.screen = this.screen.substr(0, this.screen.length - 1);
     }
+    //on s'assure qu'une operation ne commence pas par * ou /
+    if (this.screen == '' && (op == '/' || op == '*')) {
 
-    this.input = this.input + op;
-    this.calcAnswer();
+    } else {
+      this.screen = this.screen + op;
+      this.input = this.input + op;
+     // this.calcAnswer();
+    }
   }
 
   clear() {
     if (this.input != '') {
       try {
-        this.input = this.input.substr(0, this.input.length - 1);
+        if (this.recent == false) {
+          if (this.screen == 'Ans') {
+            this.screen='0';
+            this.recent = true;
+          } else {
+            this.input = this.input.substr(0, this.input.length - 1);
+            this.screen = this.screen.substr(0, this.screen.length - 1);
+          }
+        } else {
+          this.screen='0';
+        }
       } catch (e) {
         this.allClear();
       }
@@ -91,7 +122,10 @@ export class CalculatorComponent implements OnInit {
 
   allClear() {
     this.result = '';
+    this.screen='0';
     this.input = '';
+    this.output = '';
+    this.recent=false;
   }
 
   calcAnswer() {
@@ -113,22 +147,45 @@ export class CalculatorComponent implements OnInit {
       lastKey === '.'
     ) {
       formula = formula.substr(0, formula.length - 1);
+      // this.allClear();
+      // this.screen='Syntax Error';
+      // return
     }
 
-    console.log('Formula ' + formula);
-    this.result = eval(formula);
+    console.log('Formule evaluee ' + formula);
+    if(
+    this.input === '*' ||
+    this.input === '-' ||
+    this.input === '+' ||
+    this.input === '.'){
+      this.result ='0';
+      this.screen='0';
+    }
+    else{
+      this.result = eval(formula);
+     }
+    console.log(Math.fround(eval(formula)));
+    //Math.fround(eval(formula))
   }
 
   getAnswer() {
-    try{
+    try {
+      console.log('essai '+this.input);
+
       this.calcAnswer();
-      this.input = this.result;
-    //document.g('res').textContent=this.input
-    if (this.input == '0') this.input = '';
+      //this.input = this.result;
+      //document.g('res').textContent=this.input
+      this.output = this.result;
+      if (this.input == '0') this.input = '';
+      // if(this.input == '') {
+      //   this.input='0';
+      //   this.output = '0';}
+      this.recent = true;
+    } catch (err) {
+      this.screen = 'Error';
+      this.input = '';
+      this.recent = false;
     }
-    catch(err){
-      this.input='Syntax error'
-    }
-    this.recent = true;
+
   }
 }
