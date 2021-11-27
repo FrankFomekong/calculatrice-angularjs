@@ -7,185 +7,155 @@ import { Component, OnInit } from '@angular/core';
 })
 export class CalculatorComponent implements OnInit {
   constructor() {}
-  limites: RegExp = new RegExp('');
-  screen: string = '0';
-  input: string = '';
-  result: string = '';
-  output: string = '';
+  //limites: RegExp = new RegExp('');
+  screen: string = '';
+  input: string[] = [];
+  tmp: string = '';
+  optn: string[] = [];
+  ans: string = '';
   recent: boolean = false;
+  result: string = '';
+  output: string = '0';
+  error: boolean = false;
   ngOnInit(): void {
     //this.input='0';
   }
   pressNum(num: string) {
-    if(this.screen=='0'){
-      this.screen='';
-    }
-    if (this.recent == true) {
-      this.input = '';
-      this.screen='';
+    if (this.recent == false) {
+      this.tmp += num;
+      this.screen += num;
+    } else {
+      this.screen = '';
+      this.tmp = num;
+      this.screen += num;
       this.recent = false;
     }
-
-    //On evite les entrees de chifrees avec plusieurs virgules
-    if (num == '.') {
-      if (this.input != '') {
-        const lastNum = this.getLastOperand();
-        console.log(lastNum.lastIndexOf('.'));
-        if (lastNum.lastIndexOf('.') >= 0) return;
-      }
-    }
-
-    //Do Not Allow 0 at beginning.
-    //Javascript will throw Octal literals are not allowed in strict mode.
-    if (num == '0') {
-      if (this.input == '') {
-        this.screen='0';
-        return;
-      }
-
-      // const PrevKey = this.input[this.input.length - 1];
-      // if (
-      //   PrevKey === '/' ||
-      //   PrevKey === '*' ||
-      //   PrevKey === '-' ||
-      //   PrevKey === '+'
-      // ) {
-      //   this.screen+=num;
-      //   return;
-      // }
-    }
-    this.screen = this.screen + num;
-    this.input = this.input + num;
-   // this.calcAnswer();
-  }
-
-  getLastOperand() {
-    let pos: number;
-    console.log(this.input);
-    pos = this.input.toString().lastIndexOf('+');
-    if (this.input.toString().lastIndexOf('-') > pos)
-      pos = this.input.lastIndexOf('-');
-    if (this.input.toString().lastIndexOf('*') > pos)
-      pos = this.input.lastIndexOf('*');
-    if (this.input.toString().lastIndexOf('/') > pos)
-      pos = this.input.lastIndexOf('/');
-    console.log('Last ' + this.input.substr(pos + 1));
-    return this.input.substr(pos + 1);
   }
 
   pressOperator(op: string) {
-    //Pour eviter les debordements
-    if (this.recent == true) {
-      this.screen = 'Ans';
-      this.input = this.result;
-    }
-    this.recent = false;
-    const lastKey = this.input[this.input.length - 1];
-    if (
-      lastKey === '/' ||
-      lastKey === '*' ||
-      lastKey === '-' ||
-      lastKey === '+'
-    ) {
-      this.input = this.input.substr(0, this.input.length - 1);
-      this.screen = this.screen.substr(0, this.screen.length - 1);
-    }
-    //on s'assure qu'une operation ne commence pas par * ou /
-    if (this.screen == '' && (op == '/' || op == '*')) {
+    if (this.recent == false) {
+      if (this.tmp == '') {
+        this.input.push('0');
+        this.screen += op;
+        if(this.optn.length>1|| op=='/' || op=='*')
+          this.error = true;
 
+      } else {
+        this.input.push(this.tmp);
+        this.screen += op;
+      }
+      this.optn.push(op);
+      this.tmp = '';
     } else {
-      this.screen = this.screen + op;
-      this.input = this.input + op;
-     // this.calcAnswer();
+      this.screen = 'Ans' + op;
+      this.input.push(this.ans);
+      this.optn.push(op);
+      this.recent = false;
     }
   }
 
   clear() {
-    if (this.input != '') {
-      try {
-        if (this.recent == false) {
-          if (this.screen == 'Ans') {
-            this.screen='0';
-            this.recent = true;
-          } else {
-            this.input = this.input.substr(0, this.input.length - 1);
-            this.screen = this.screen.substr(0, this.screen.length - 1);
-          }
-        } else {
-          this.screen='0';
-        }
-      } catch (e) {
-        this.allClear();
+    if (this.recent == false) {
+      if (this.tmp.toString() != '') {
+        this.screen = this.screen.substr(0, this.screen.length - 1);
+        this.tmp = this.tmp.substr(0, this.tmp.length - 1);
       }
+      // }else{
+      //   this.optn.pop();
+      //   this.screen = this.screen.substr(0, this.screen.length - 1);
+      //   this.tmp=this.input[this.input.length-1];
+      //   this.input.pop();
+      // }
     }
   }
 
   allClear() {
-    this.result = '';
-    this.screen='0';
-    this.input = '';
-    this.output = '';
-    this.recent=false;
+    this.screen = '';
+    this.input = [];
+    this.optn = [];
+    this.output = '0';
+    this.tmp = '';
   }
 
   calcAnswer() {
-    let formula = this.input;
+    this.input.push(this.tmp);
+    this.tmp = '';
+    let n = this.optn.length;
+    let res = Number(this.input[0]);
+    // for (let i = 0; i < n; i++) {
+    //   console.log(res);
+    //   switch (this.optn[i]) {
+    //     case '*':
+    //       res = res * Number(this.input[i + 1]);
+    //       console.log(this.input[i + 1]);
 
-    let lastKey = formula[formula.length - 1];
-
-    if (lastKey === '.') {
-      formula = formula.substr(0, formula.length - 1);
+    //       break;
+    //     case '/':
+    //       res = res / Number(this.input[i + 1]);
+    //       break;
+    //     case '+':
+    //       res = res + Number(this.input[i + 1]);
+    //       break;
+    //     case '-':
+    //       res = res - Number(this.input[i + 1]);
+    //       break;
+    //     default:
+    //       console.log(res);
+    //   }
+    // }
+    let res2 = Number(this.input[0]).toString();
+    for (let i = 0; i < n; i++) {
+      res2 += this.optn[i] + Number(this.input[i + 1]).toString();
     }
+    this.result = eval(res2);
+    console.log(this.result);
+    // this.result = res.toString();
+    this.optn = [];
+    this.input = [];
 
-    lastKey = formula[formula.length - 1];
-
-    if (
-      lastKey === '/' ||
-      lastKey === '*' ||
-      lastKey === '-' ||
-      lastKey === '+' ||
-      lastKey === '.'
-    ) {
-      formula = formula.substr(0, formula.length - 1);
-      // this.allClear();
-      // this.screen='Syntax Error';
-      // return
-    }
-
-    console.log('Formule evaluee ' + formula);
-    if(
-    this.input === '*' ||
-    this.input === '-' ||
-    this.input === '+' ||
-    this.input === '.'){
-      this.result ='0';
-      this.screen='0';
-    }
-    else{
-      this.result = eval(formula);
-     }
-    console.log(Math.fround(eval(formula)));
-    //Math.fround(eval(formula))
-  }
+   }
 
   getAnswer() {
-    try {
-      console.log('essai '+this.input);
-
+    if (this.recent == true) {
+    } else if (this.error) {
+      this.output = 'Syntax Error';
+      this.screen = '';
+      this.optn = [];
+      this.input = [];
+      this.error = false;
+    } else if (this.optn.length > 0 && this.tmp != '') {
       this.calcAnswer();
-      //this.input = this.result;
-      //document.g('res').textContent=this.input
       this.output = this.result;
-      if (this.input == '0') this.input = '';
-      // if(this.input == '') {
-      //   this.input='0';
-      //   this.output = '0';}
-      this.recent = true;
-    } catch (err) {
-      this.screen = 'Error';
-      this.input = '';
-      this.recent = false;
+      if (
+        this.output.toString() != 'NaN' &&
+        this.output.toString() != 'Infinity'
+      ) {
+        this.ans = this.result;
+        this.recent = true;
+      } else {
+        this.output = 'Math Error';
+        this.optn = [];
+        this.input = [];
+        this.screen = '';
+      }
+    } else if (this.tmp == '') {
+      this.output = 'Syntax Error';
+      this.screen = '';
+      this.optn = [];
+      this.input = [];
+    } else {
+      this.result = Number(this.tmp).toString();
+      console.log(this.result);
+      if (this.result.toString() == 'NaN') {
+        this.output = 'Syntax Error';
+        this.optn = [];
+        this.input = [];
+        this.screen = '';
+      } else {
+        this.ans = this.tmp;
+        this.recent = true;
+      }
     }
-
+    return;
   }
 }
